@@ -1,1 +1,1 @@
-# This repository conatains projects undertaken during ALX SE backend specialization
+# This repository contains projects undertaken during ALX SE backend specialization
