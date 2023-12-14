@@ -54,14 +54,14 @@ module.exports = function countStudents(path) {
         listOfCsStudents.push(firstnames);
       }
       const numOfCsStudents = listOfCsStudents.length;
-      console.log(`Number of students in ${fieldKey}: ${numOfCsStudents}. List: ${listOfCsStudents}`);
+      console.log(`Number of students in ${fieldKey}: ${numOfCsStudents}. List: ${listOfCsStudents.join(', ')}`);
     } else if (fields[fieldKey][0].field === listOfFields[1]) {
       for (const names of fields[fieldKey]) {
         const firstnames = names.firstname;
         listOfSweStudents.push(firstnames);
       }
       const numOfSweStudents = listOfSweStudents.length;
-      console.log(`Number of students in ${fieldKey}: ${numOfSweStudents}. List: ${listOfSweStudents}`);
+      console.log(`Number of students in ${fieldKey}: ${numOfSweStudents}. List: ${listOfSweStudents.join(', ')}`);
     }
   }
 };
