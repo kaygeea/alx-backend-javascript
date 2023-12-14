@@ -4,7 +4,7 @@ module.exports = async function countStudents(path) {
   try {
     // Attempt to read the database file asynchronously
     const csvString = await fs.readFile(path, 'utf-8');
-    
+
     // Split csv content into separate lines
     const studentData = csvString.split(/\r?\n/);
 
@@ -23,7 +23,7 @@ module.exports = async function countStudents(path) {
     studentDataArray.pop(); // Pop extra undefined object returned with set.
 
     // Process data accordingly
-    let numOfStudents = studentDataArray.length; // Count the number of students
+    const numOfStudents = studentDataArray.length; // Count the number of students
     console.log(`Number of students: ${numOfStudents}`);
 
     // Group students by field of study
@@ -37,7 +37,7 @@ module.exports = async function countStudents(path) {
 
     const listOfFields = Object.keys(fields);
     for (const fieldKey of listOfFields) {
-      const listOfStudents = fields[fieldKey].map(student => student.firstname).join(', ');
+      const listOfStudents = fields[fieldKey].map((student) => student.firstname).join(', ');
       const numOfStudentsInField = fields[fieldKey].length;
       console.log(`Number of students in ${fieldKey}: ${numOfStudentsInField}. List: ${listOfStudents}`);
     }
