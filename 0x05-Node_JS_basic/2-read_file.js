@@ -14,7 +14,6 @@ module.exports = function countStudents(path) {
 
   // Extract line with fields to use as object keys
   const studentDataKeys = studentData[0].split(',');
-  console.log(`${studentDataKeys}`);
 
   // Build an array of objects from CSV file
   const studentDataArray = studentData.slice(1).map((line) => {
