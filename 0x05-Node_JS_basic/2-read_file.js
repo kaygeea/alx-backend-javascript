@@ -1,67 +1,41 @@
 const fs = require('fs');
-// import fs from 'fs';
 
-module.exports = function countStudents(path) {
-  if (!fs.existsSync(path)) {
+const countStudents = (dataPath) => {
+  if (!fs.existsSync(dataPath)) {
     throw new Error('Cannot load the database');
   }
-  if (!fs.statSync(path).isFile()) {
+  if (!fs.statSync(dataPath).isFile()) {
     throw new Error('Cannot load the database');
   }
-  // Open file and split csv content into separate lines
-  const csvString = fs.readFileSync(path, 'utf-8');
-  const studentData = csvString.split(/\r?\n/);
+  const fileLines = fs
+    .readFileSync(dataPath, 'utf-8')
+    .toString('utf-8')
+    .trim()
+    .split('\n');
+  const studentGroups = {};
+  const dbFieldNames = fileLines[0].split(',');
+  const studentPropNames = dbFieldNames.slice(0, dbFieldNames.length - 1);
 
-  // Extract line with fields to use as object keys
-  const studentDataKeys = studentData[0].split(',');
-
-  // Build an array of objects from CSV file
-  const studentDataArray = studentData.slice(1).map((line) => {
-    const values = line.split(',');
-    const obj = {};
-    studentDataKeys.forEach((key, index) => {
-      obj[key] = values[index];
-    });
-    return obj;
-  });
-  studentDataArray.pop(); // Pop extra undefined object returned with set.
-
-  // Process data accordingly
-  let numOfStudents = 0;
-  const listOfCsStudents = [];
-  const listOfSweStudents = [];
-  studentDataArray.forEach(() => {
-    numOfStudents += 1;
-  });
-  console.log(`Number of students: ${numOfStudents}`);
-
-  // Group students by field of study
-
-  // const fields = Object.groupBy(studentDataArray, ({ field }) => field);
-  const fields = studentDataArray.reduce((group, student) => {
-    const { field } = student;
-    const groupCopy = { ...group };
-    groupCopy[field] = groupCopy[field] || [];
-    groupCopy[field].push(student);
-    return groupCopy;
-  }, {});
-
-  const listOfFields = Object.keys(fields);
-  for (const fieldKey of listOfFields) {
-    if (fields[fieldKey][0].field === listOfFields[0]) {
-      for (const names of fields[fieldKey]) {
-        const firstnames = names.firstname;
-        listOfCsStudents.push(firstnames);
-      }
-      const numOfCsStudents = listOfCsStudents.length;
-      console.log(`Number of students in ${fieldKey}: ${numOfCsStudents}. List: ${listOfCsStudents.join(', ')}`);
-    } else if (fields[fieldKey][0].field === listOfFields[1]) {
-      for (const names of fields[fieldKey]) {
-        const firstnames = names.firstname;
-        listOfSweStudents.push(firstnames);
-      }
-      const numOfSweStudents = listOfSweStudents.length;
-      console.log(`Number of students in ${fieldKey}: ${numOfSweStudents}. List: ${listOfSweStudents.join(', ')}`);
+  for (const line of fileLines.slice(1)) {
+    const studentRecord = line.split(',');
+    const studentPropValues = studentRecord.slice(0, studentRecord.length - 1);
+    const field = studentRecord[studentRecord.length - 1];
+    if (!Object.keys(studentGroups).includes(field)) {
+      studentGroups[field] = [];
     }
+    const studentEntries = studentPropNames
+      .map((propName, idx) => [propName, studentPropValues[idx]]);
+    studentGroups[field].push(Object.fromEntries(studentEntries));
+  }
+
+  const totalStudents = Object
+    .values(studentGroups)
+    .reduce((pre, cur) => (pre || []).length + cur.length);
+  console.log(`Number of students: ${totalStudents}`);
+  for (const [field, group] of Object.entries(studentGroups)) {
+    const studentNames = group.map((student) => student.firstname).join(', ');
+    console.log(`Number of students in ${field}: ${group.length}. List: ${studentNames}`);
   }
 };
+
+module.exports = countStudents;
