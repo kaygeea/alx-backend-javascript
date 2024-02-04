@@ -3,11 +3,12 @@ const readline = require('readline');
 
 const countStudents = (dbPath) => {
   // Check if file exists
-  fs.open(dbPath, (err) => {
-    if (err) {
-      throw new Error('Cannot load the database');
-    }
-  });
+  if (!fs.existsSync(dataPath)) {
+    throw new Error('Cannot load the database');
+  }
+  if (!fs.statSync(dataPath).isFile()) {
+    throw new Error('Cannot load the database');
+  }
 
   const processDataToObj = (data) => {
     // Function to process the data after it has been read in the 'line' event.
