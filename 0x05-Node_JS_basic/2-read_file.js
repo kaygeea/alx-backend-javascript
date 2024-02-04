@@ -1,9 +1,7 @@
 const fs = require('fs');
 const readline = require('readline');
 
-
 const countStudents = (dbPath) => {
-
   // Check if file exists
   fs.open(dbPath, (err) => {
     if (err) {
@@ -33,38 +31,41 @@ const countStudents = (dbPath) => {
   // Create readline interface to receive stream from file
   const rl = readline.createInterface({
     input: fs.createReadStream(dbPath, 'utf-8'),
-    crlfDelay: Infinity
+    crlfDelay: Infinity,
   });
 
   // Process the data in the file, line by line
-  let arrOfData = []; // Add each line as an array to this
+  const arrOfData = []; // Add each line as an array to this
   rl.on('line', (line) => {
     const splitLine = line.split(',');
     arrOfData.push(splitLine);
   });
 
   rl.on('close', () => {
-    const studentData = processDataToObj(arrOfData)
+    const studentData = processDataToObj(arrOfData);
 
     let csStudents = '';
     let csStudentCount = 0;
     let sweStudents = '';
     let sweStudentCount = 0;
+    let fieldOne = '';
+    let fieldTwo = '';
 
     for (const student of studentData) {
       if (student.field === 'CS') {
-        csStudents += student.firstname + ', ';
+        csStudents += `${student.firstname}, `;
         csStudentCount += 1;
+        fieldOne = student.field;
       } else if (student.field === 'SWE') {
-        sweStudents += student.firstname + ', ';
+        sweStudents += `${student.firstname}, `;
         sweStudentCount += 1;
-      };
-    };
+        fieldTwo = student.field;
+      }
+    }
     console.log(`Number of students: ${studentData.length}`);
-    console.log(`Number of students in CS: ${csStudentCount}. List: ${csStudents.slice(0, -2)}`);
-    console.log(`Number of students in SWE: ${sweStudentCount}. List: ${sweStudents.slice(0, -2)}`);
+    console.log(`Number of students in ${fieldOne}: ${csStudentCount}. List: ${csStudents.slice(0, -2)}`);
+    console.log(`Number of students in ${fieldTwo}: ${sweStudentCount}. List: ${sweStudents.slice(0, -2)}`);
   });
 };
 
 module.exports = countStudents;
-
