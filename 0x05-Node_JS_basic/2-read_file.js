@@ -12,7 +12,7 @@ const countStudents = (dbPath) => {
   // Parse CSV content into an array of arrays
   const dataToArray = (dbPath) => {
     const fileContent = fs.readFileSync(dbPath, 'utf-8').trim();
-    return fileContent.split('\n').map(line => line.split(','));
+    return fileContent.split('\n').map((line) => line.split(','));
   };
   const arrOfData = dataToArray(dbPath);
 
@@ -37,24 +37,24 @@ const countStudents = (dbPath) => {
   let csStudents = '';
   let csStudentCount = 0;
   let sweStudents = '';
-  let sweStudentCount = 0   
+  let sweStudentCount = 0;
   let fieldOne = '';
   let fieldTwo = '';
 
   for (const student of objOfData) {
-      if (student.field === 'CS') {
-        csStudents += `${student.firstname}, `;
-        csStudentCount += 1;
-        fieldOne = student.field;
-      } else if (student.field === 'SWE') {
-        sweStudents += `${student.firstname}, `;
-        sweStudentCount += 1;
-        fieldTwo = student.field;
-      }
+    if (student.field === 'CS') {
+      csStudents += `${student.firstname}, `;
+      csStudentCount += 1;
+      fieldOne = student.field;
+    } else if (student.field === 'SWE') {
+      sweStudents += `${student.firstname}, `;
+      sweStudentCount += 1;
+      fieldTwo = student.field;
     }
-    console.log(`Number of students: ${objOfData.length}`);
-    console.log(`Number of students in ${fieldOne}: ${csStudentCount}. List: ${csStudents.slice(0, -2)}`);
-    console.log(`Number of students in ${fieldTwo}: ${sweStudentCount}. List: ${sweStudents.slice(0, -2)}`);
+  }
+  console.log(`Number of students: ${objOfData.length}`);
+  console.log(`Number of students in ${fieldOne}: ${csStudentCount}. List: ${csStudents.slice(0, -2)}`);
+  console.log(`Number of students in ${fieldTwo}: ${sweStudentCount}. List: ${sweStudents.slice(0, -2)}`);
 };
 
 module.exports = countStudents;
