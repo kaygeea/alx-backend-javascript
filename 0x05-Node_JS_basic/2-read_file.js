@@ -1,25 +1,28 @@
 const fs = require('fs');
-const readline = require('readline');
 
 const countStudents = (dbPath) => {
   // Check if file exists
-  if (!fs.existsSync(dataPath)) {
+  if (!fs.existsSync(dbPath)) {
     throw new Error('Cannot load the database');
   }
-  if (!fs.statSync(dataPath).isFile()) {
+  if (!fs.statSync(dbPath).isFile()) {
     throw new Error('Cannot load the database');
   }
 
-  const processDataToObj = (data) => {
-    // Function to process the data after it has been read in the 'line' event.
-    // Because the 'line' event is non-blocking (async), this func will only be
-    // called in the 'close' event handler to be sure that there is data.
+  // Parse CSV content into an array of arrays
+  const dataToArray = (dbPath) => {
+    const fileContent = fs.readFileSync(dbPath, 'utf-8').trim();
+    return fileContent.split('\n').map(line => line.split(','));
+  };
+  const arrOfData = dataToArray(dbPath);
 
-    // Define keys of object
-    const header = data[0];
+  // Convert array of arrays into object, with the headers as the key
+  const arrToObj = (arrData) => {
+    // Define object keys
+    const header = arrData[0];
 
     // Define and map values to each key
-    const studentDataObj = data.slice(1).map((value) => {
+    const studentDataObj = arrData.slice(1).map((value) => {
       const person = {};
       header.forEach((key, index) => {
         person[key] = value[index];
@@ -28,31 +31,17 @@ const countStudents = (dbPath) => {
     });
     return studentDataObj;
   };
+  const objOfData = arrToObj(arrOfData);
 
-  // Create readline interface to receive stream from file
-  const rl = readline.createInterface({
-    input: fs.createReadStream(dbPath, 'utf-8'),
-    crlfDelay: Infinity,
-  });
+  // Process object to get student data
+  let csStudents = '';
+  let csStudentCount = 0;
+  let sweStudents = '';
+  let sweStudentCount = 0   
+  let fieldOne = '';
+  let fieldTwo = '';
 
-  // Process the data in the file, line by line
-  const arrOfData = []; // Add each line as an array to this
-  rl.on('line', (line) => {
-    const splitLine = line.split(',');
-    arrOfData.push(splitLine);
-  });
-
-  rl.on('close', () => {
-    const studentData = processDataToObj(arrOfData);
-
-    let csStudents = '';
-    let csStudentCount = 0;
-    let sweStudents = '';
-    let sweStudentCount = 0;
-    let fieldOne = '';
-    let fieldTwo = '';
-
-    for (const student of studentData) {
+  for (const student of objOfData) {
       if (student.field === 'CS') {
         csStudents += `${student.firstname}, `;
         csStudentCount += 1;
@@ -63,10 +52,9 @@ const countStudents = (dbPath) => {
         fieldTwo = student.field;
       }
     }
-    console.log(`Number of students: ${studentData.length}`);
+    console.log(`Number of students: ${objOfData.length}`);
     console.log(`Number of students in ${fieldOne}: ${csStudentCount}. List: ${csStudents.slice(0, -2)}`);
     console.log(`Number of students in ${fieldTwo}: ${sweStudentCount}. List: ${sweStudents.slice(0, -2)}`);
-  });
 };
 
 module.exports = countStudents;
