@@ -6,7 +6,7 @@ const app = http.createServer();
 
 app.on('request', (req, res) => {
   res.setHeader('Content-Type', 'text/plain');
-  res.response(200);
+  res.status(200);
   res.end('Hello Holberton School!');
 });
 
