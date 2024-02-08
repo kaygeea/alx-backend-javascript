@@ -1,4 +1,5 @@
 const express = require('express');
+
 const app = express();
 const PORT = 1245;
 
@@ -8,4 +9,6 @@ app.get('/', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server is running and listening on Port: ${PORT}`);
-})
+});
+
+module.exports = app;
