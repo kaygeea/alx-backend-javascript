@@ -23,7 +23,7 @@ class StudentsController {
       Object.keys(objOfArr).forEach((key) => {
         msg += `Number of students in ${key}: ${objOfArr[key].length}. List: ${objOfArr[key].join(', ')}\n`;
       });
-      response.send(msg.trim());
+      response.status(200).send(`This is the list of our students\n${msg.trim()}`);
     }).catch((error) => {
       response.status(500).send(error.message);
     });
@@ -40,12 +40,13 @@ class StudentsController {
   */
   static getAllStudentsByMajor(request, response) {
     let msg = '';
-    const major = (request.param.major || '').toUpperCase();
+    const major = (request.params.major).toUpperCase();
+    console.log(major);
 
     if (major === 'CS' || major === 'SWE') {
       readDatabase(DB_FILE).then((objOfArr) => {
         msg = `Number of students in ${major}: ${objOfArr[major].length}. List: ${objOfArr[major].join(', ')}`;
-        response.send(msg);
+        response.status(200).send(msg);
       }).catch((error) => {
         response.status(500).send(error.message);
       });
