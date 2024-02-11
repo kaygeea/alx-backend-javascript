@@ -3,8 +3,10 @@
  * @module full_server/controllers/AppController.js
  * @class
  */
-export class AppController {
+class AppController {
   static getHomePage(request, response) {
     response.send('Hello Holberton School');
   }
 }
+
+export default AppController;
