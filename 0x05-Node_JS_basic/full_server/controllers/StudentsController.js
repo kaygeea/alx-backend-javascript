@@ -1,59 +1,74 @@
 import readDatabase from '../utils';
 
-const DB_FILE = process.argv[2] || '';
+/**
+ * The list of supported majors.
+ */
+const VALID_MAJORS = ['CS', 'SWE'];
 
 /**
- * Controller for handling student-related routes.
- * @module full_server/controllers/StudentController
- * @class
+ * Contains the student-related route handlers.
+ * @author Bezaleel Olakunori <https://github.com/B3zaleel>
  */
 class StudentsController {
-  /**
-  * Retrieves all students from the database and sends the response.
-  * @static
-  * @param {Object} request - The HTTP request object.
-  * @param {Object} response - The HTTP response object.
-  * @see module:full_server\utils.js
-  * @returns {void}
-  */
   static getAllStudents(request, response) {
-    let msg = '';
+    const dataPath = process.argv.length > 2 ? process.argv[2] : '';
 
-    readDatabase(DB_FILE).then((objOfArr) => {
-      Object.keys(objOfArr).forEach((key) => {
-        msg += `Number of students in ${key}: ${objOfArr[key].length}. List: ${objOfArr[key].join(', ')}\n`;
+    readDatabase(dataPath)
+      .then((studentGroups) => {
+        const responseParts = ['This is the list of our students'];
+        // A comparison function for ordering a list of strings in ascending
+        // order by alphabetic order and case insensitive
+        const cmpFxn = (a, b) => {
+          if (a[0].toLowerCase() < b[0].toLowerCase()) {
+            return -1;
+          }
+          if (a[0].toLowerCase() > b[0].toLowerCase()) {
+            return 1;
+          }
+          return 0;
+        };
+
+        for (const [field, group] of Object.entries(studentGroups).sort(cmpFxn)) {
+          responseParts.push([
+            `Number of students in ${field}: ${group.length}.`,
+            'List:',
+            group.map((student) => student.firstname).join(', '),
+          ].join(' '));
+        }
+        response.status(200).send(responseParts.join('\n'));
+      })
+      .catch((err) => {
+        response
+          .status(500)
+          .send(err instanceof Error ? err.message : err.toString());
       });
-      response.status(200).send(`This is the list of our students\n${msg.trim()}`);
-    }).catch((error) => {
-      response.status(500).send(error.message);
-    });
   }
 
-  /**
-  * Retrieves students, by major, from the database and sends the response.
-  * @static
-  * @param {Object} request - The HTTP request object.
-  * @param {Object} response - The HTTP response object.
-  * @throws {Error} Will throw an error if the wrong parameter is received.
-  * @see module:full_server\utils.js
-  * @returns {void}
-  */
   static getAllStudentsByMajor(request, response) {
-    let msg = '';
-    const major = (request.params.major).toUpperCase();
-    console.log(major);
+    const dataPath = process.argv.length > 2 ? process.argv[2] : '';
+    const { major } = request.params;
 
-    if (major === 'CS' || major === 'SWE') {
-      readDatabase(DB_FILE).then((objOfArr) => {
-        msg = `Number of students in ${major}: ${objOfArr[major].length}. List: ${objOfArr[major].join(', ')}`;
-        response.status(200).send(msg);
-      }).catch((error) => {
-        response.status(500).send(error.message);
-      });
-    } else {
+    if (!VALID_MAJORS.includes(major)) {
       response.status(500).send('Major parameter must be CS or SWE');
+      return;
     }
+    readDatabase(dataPath)
+      .then((studentGroups) => {
+        let responseText = '';
+
+        if (Object.keys(studentGroups).includes(major)) {
+          const group = studentGroups[major];
+          responseText = `List: ${group.map((student) => student.firstname).join(', ')}`;
+        }
+        response.status(200).send(responseText);
+      })
+      .catch((err) => {
+        response
+          .status(500)
+          .send(err instanceof Error ? err.message : err.toString());
+      });
   }
 }
 
 export default StudentsController;
+module.exports = StudentsController;
