@@ -3,82 +3,93 @@ const fs = require('fs');
 
 const app = express();
 const PORT = 1245;
-const DB_FILE = process.argv[2] || '';
+const DB_FILE = process.argv.length > 2 ? process.argv[2] : '';
 
-// STEP 1 - Define function to count students, for the '/students' route handler
-const countStudent = (dbPath) => new Promise((resolve, reject) => {
-  if (!dbPath) {
+/**
+ * Counts the students in a CSV data file.
+ * @param {String} dataPath The path to the CSV data file.
+ */
+const countStudents = (dataPath) => new Promise((resolve, reject) => {
+  if (!dataPath) {
     reject(new Error('Cannot load the database'));
   }
-  if (dbPath) {
-    fs.readFile(dbPath, 'utf-8', (err, data) => {
+  if (dataPath) {
+    fs.readFile(dataPath, (err, data) => {
       if (err) {
-        reject(new Error('Cannot load the Database'));
-        return;
+        reject(new Error('Cannot load the database'));
       }
       if (data) {
-        // Parse CSV content into an array of arrays
-        const arrOfFileContent = data.trim().split('\n').map((line) => line.split(','));
+        const reportParts = [];
+        const fileLines = data.toString('utf-8').trim().split('\n');
+        const studentGroups = {};
+        const dbFieldNames = fileLines[0].split(',');
+        const studentPropNames = dbFieldNames.slice(
+          0,
+          dbFieldNames.length - 1,
+        );
 
-        // Convert array of arrays to object, with the csv headers as the keys
-        const header = arrOfFileContent[0];
-
-        // Define and map values to their respective keys
-        const studentDataObj = arrOfFileContent.slice(1).map((value) => {
-          const person = {};
-          header.forEach((key, index) => {
-            person[key] = value[index];
-          });
-          return person;
-        });
-
-        // Process object to get student data
-        let csStudents = '';
-        let csStudentCount = 0;
-        let sweStudents = '';
-        let sweStudentCount = 0;
-        let fieldOne = '';
-        let fieldTwo = '';
-
-        for (const student of studentDataObj) {
-          if (student.field === 'CS') {
-            csStudents += `${student.firstname}, `;
-            csStudentCount += 1;
-            fieldOne = student.field;
-          } else if (student.field === 'SWE') {
-            sweStudents += `${student.firstname}, `;
-            sweStudentCount += 1;
-            fieldTwo = student.field;
+        for (const line of fileLines.slice(1)) {
+          const studentRecord = line.split(',');
+          const studentPropValues = studentRecord.slice(
+            0,
+            studentRecord.length - 1,
+          );
+          const field = studentRecord[studentRecord.length - 1];
+          if (!Object.keys(studentGroups).includes(field)) {
+            studentGroups[field] = [];
           }
+          const studentEntries = studentPropNames.map((propName, idx) => [
+            propName,
+            studentPropValues[idx],
+          ]);
+          studentGroups[field].push(Object.fromEntries(studentEntries));
         }
-        const message = `This is the list of our students\nNumber of students: ${studentDataObj.length}\nNumber of students in ${fieldOne}: ${csStudentCount}. List: ${csStudents.slice(0, -2)}\nNumber of students in ${fieldTwo}: ${sweStudentCount}. List: ${sweStudents.slice(0, -2)}`;
 
-        resolve(message); // Resolve the promise with the message to be returned on the page
+        const totalStudents = Object.values(studentGroups).reduce(
+          (pre, cur) => (pre || []).length + cur.length,
+        );
+        reportParts.push(`Number of students: ${totalStudents}`);
+        for (const [field, group] of Object.entries(studentGroups)) {
+          reportParts.push([
+            `Number of students in ${field}: ${group.length}.`,
+            'List:',
+            group.map((student) => student.firstname).join(', '),
+          ].join(' '));
+        }
+        resolve(reportParts.join('\n'));
       }
     });
   }
 });
 
-// STEP 2 - Define route handlers
-app.get('/', (req, res) => {
+app.get('/', (_, res) => {
   res.send('Hello Holberton School!');
 });
 
-app.get('/students', (req, res) => {
-  // Call the countStudent function and handle the promise
-  countStudent(DB_FILE)
-    .then((message) => {
+app.get('/students', (_, res) => {
+  const responseParts = ['This is the list of our students'];
+
+  countStudents(DB_FILE)
+    .then((report) => {
+      responseParts.push(report);
+      const responseText = responseParts.join('\n');
       res.setHeader('Content-Type', 'text/plain');
-      res.write(message); // Send the message in the response
-      res.end();
-    }).catch((error) => {
-      res.writeHead(500);
-      res.end(error.message); // Send the error message in case of failure
+      res.setHeader('Content-Length', responseText.length);
+      res.statusCode = 200;
+      res.write(Buffer.from(responseText));
+    })
+    .catch((err) => {
+      responseParts.push(err instanceof Error ? err.message : err.toString());
+      const responseText = responseParts.join('\n');
+      res.setHeader('Content-Type', 'text/plain');
+      res.setHeader('Content-Length', responseText.length);
+      res.statusCode = 200;
+      res.write(Buffer.from(responseText));
     });
 });
 
 app.listen(PORT, () => {
-  console.log(`Server is running and listening on Port: ${PORT}`);
+  console.log(`Server listening on PORT ${PORT}`);
 });
 
 module.exports = app;
